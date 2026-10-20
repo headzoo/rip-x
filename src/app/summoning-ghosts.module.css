@@ -1,0 +1,139 @@
+.ghosts {
+  /* The transparent cell margins leave the visible ghost about 150px tall. */
+  --ghost-height: 170px;
+  --ghost-width: calc(var(--ghost-height) * 384 / 440);
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 850ms ease, visibility 0s linear 850ms;
+}
+
+.ghosts[data-active="true"] {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 1.2s ease, visibility 0s;
+}
+
+.flight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--ghost-width);
+  height: var(--ghost-height);
+  transform: translate3d(
+    calc((100vw - var(--ghost-width)) * var(--x0)),
+    calc((100svh - var(--ghost-height)) * var(--y0)),
+    0
+  );
+  animation: drift var(--flight-duration) cubic-bezier(0.45, 0, 0.55, 1) var(--flight-phase) infinite;
+  animation-play-state: paused;
+  will-change: transform;
+}
+
+.apparition {
+  width: 100%;
+  height: 100%;
+  opacity: var(--ghost-opacity);
+  transform: scale(var(--ghost-scale)) scaleX(var(--ghost-mirror));
+  filter: drop-shadow(0 0 9px rgb(175 221 227 / 20%));
+}
+
+.sway {
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 22%;
+  animation: hover 5.8s ease-in-out var(--breath-phase) infinite;
+  animation-play-state: paused;
+}
+
+.sprite {
+  width: 100%;
+  height: 100%;
+  background-image: url("/images/summoning-ghost-sprites-v2.webp");
+  background-repeat: no-repeat;
+  background-size: 400% 300%;
+  background-position: 0 0;
+  animation: moan var(--breath-duration) steps(1, end) var(--breath-phase) infinite;
+  animation-play-state: paused;
+}
+
+.ghosts[data-active="true"] .flight,
+.ghosts[data-active="true"] .sway,
+.ghosts[data-active="true"] .sprite {
+  animation-play-state: running;
+}
+
+@keyframes drift {
+  0%, 100% {
+    transform: translate3d(
+      calc((100vw - var(--ghost-width)) * var(--x0)),
+      calc((100svh - var(--ghost-height)) * var(--y0)),
+      0
+    );
+  }
+  25% {
+    transform: translate3d(
+      calc((100vw - var(--ghost-width)) * var(--x1)),
+      calc((100svh - var(--ghost-height)) * var(--y1)),
+      0
+    );
+  }
+  50% {
+    transform: translate3d(
+      calc((100vw - var(--ghost-width)) * var(--x2)),
+      calc((100svh - var(--ghost-height)) * var(--y2)),
+      0
+    );
+  }
+  75% {
+    transform: translate3d(
+      calc((100vw - var(--ghost-width)) * var(--x3)),
+      calc((100svh - var(--ghost-height)) * var(--y3)),
+      0
+    );
+  }
+}
+
+@keyframes hover {
+  0%, 100% {
+    transform: translateY(7px) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(4deg);
+  }
+}
+
+/* Twelve row-major frames: cloth billows while the mouth opens and closes. */
+@keyframes moan {
+  0% { background-position: 0% 0%; }
+  8.333333% { background-position: 33.333333% 0%; }
+  16.666667% { background-position: 66.666667% 0%; }
+  25% { background-position: 100% 0%; }
+  33.333333% { background-position: 0% 50%; }
+  41.666667% { background-position: 33.333333% 50%; }
+  50% { background-position: 66.666667% 50%; }
+  58.333333% { background-position: 100% 50%; }
+  66.666667% { background-position: 0% 100%; }
+  75% { background-position: 33.333333% 100%; }
+  83.333333% { background-position: 66.666667% 100%; }
+  91.666667% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghosts {
+    transition: none;
+  }
+
+  .flight,
+  .sway,
+  .sprite {
+    animation: none;
+    will-change: auto;
+  }
+}

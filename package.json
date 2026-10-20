@@ -6,9 +6,11 @@
     "dev": "next dev --port 3003",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --experimental-strip-types --conditions=react-server --experimental-test-isolation=none --test tests/*.test.mjs"
   },
   "dependencies": {
+    "@vercel/functions": "^3.10.1",
     "@xdevplatform/xdk": "^0.6.6",
     "next": "16.4.2",
     "openai": "^7.38.0",

@@ -1,0 +1,17 @@
+# Summoning ghosts
+
+Generated with the built-in image-generation tool, using the user's supplied ghost image as a silhouette reference. The source PNG retains its original transparency. Its painted grid is approximate: some gowns extend into neighboring cells, so evenly slicing the original image produces stray sprite fragments.
+
+The corrected production sheet extracts the twelve actual silhouettes, preserves their translucent edges, aligns their heads, and packs each into a 384 × 440 cell with at least 16px of transparent padding on every side. The resulting 4 × 3 sheet is 1536 × 1320. Its versioned URL avoids reusing a cached copy of the original sheet.
+
+- Source: `docs/assets/summoning-ghost-sprites.png`
+- Production: `public/images/summoning-ghost-sprites-v2.webp`
+- Playback: 12 frames, left to right then top to bottom; 2.4–3.3 seconds per cycle, independently phased for six apparitions.
+- Display: approximately 148.36 × 170px cells with transparent padding, giving each ghost a visible height of approximately 150px.
+- Lifecycle: visible during form submission, fades away on completion or error, all animations pause while hidden. Reduced-motion preferences disable animation.
+
+To rebuild the production sheet from the original PNG, run `node scripts/prepare-ghost-sprites.mjs`. The utility verifies the twelve silhouettes and transparent padding; it does not regenerate the artwork.
+
+## Generation prompt
+
+Use case: stylized-concept. Asset type: production transparent animation sprite sheet for a gothic website loading effect. Generate a NEW raster sprite sheet, using the attached ghost ONLY as a subject/silhouette reference, not as an edit target. A realistic spectral ghost in a long ragged, billowing, translucent ivory-white burial gown, hollow black eyes and an expressive black oval mouth, soft cold-blue shadows, fine flowing gauze strands dissolving into mist at the hem. Beautiful photorealistic cinematic VFX cloth and smoke, spooky and eerie, not pixel art, no hard black outline, no cute cartoon. Make EXACTLY 12 consecutive frames of ONE SAME ghost animation in a precise 4-column by 3-row uniform grid on a square canvas, ideally 1536 by 1536 pixels: every cell is exactly 384 pixels wide and 512 high. Row-major playback (left to right, top to bottom). Each ghost stays full-body centered on the SAME anchor at cell x=192, head at y=65 and hem approximately y=455. Consistent face, lighting, body scale, pose, head height and framing in every cell. The torso stays still while the sleeves and long shredded gown organically wave left-to-right then return in one seamless breathing cycle. Mouth smoothly opens from a small oval in frame 1 through a wide elongated moaning mouth by frame 6, then slowly closes back toward the small oval by frame 12; both eyes remain the same size. The last frame smoothly leads into the first. These are consecutive animation frames, not different character designs or poses. No frame touches its cell edge; maintain generous truly transparent gutters around each ghost and between cells so it can be safely animated at about 150px tall. Preserve semi-transparent vapor edges, no detached fragments outside cells. GENUINELY TRANSPARENT RGBA background, no white, no black, no checkerboard pattern drawn into the image, no scene, no contact shadows, no ground. No grid lines, no borders, no text, no labels, no numbers, no watermarks.

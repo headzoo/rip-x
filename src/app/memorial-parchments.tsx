@@ -1,5 +1,7 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
 
+import type { HauntingArtwork } from "@/lib/haunting-image";
 import type { Memorial } from "@/lib/memorial";
 
 function Parchment({
@@ -31,10 +33,12 @@ function Parchment({
 export function MemorialParchments({
   memorial,
   displayName,
+  hauntingArtwork,
   username,
 }: {
   memorial: Memorial;
   displayName: string;
+  hauntingArtwork: HauntingArtwork;
   username: string;
 }) {
   return (
@@ -66,6 +70,19 @@ export function MemorialParchments({
         <p className="obituary-kicker">III · The haunting</p>
         <h2 id="haunting-title">{memorial.haunting.location}</h2>
         <p className="haunting-subtitle">Where their spirit lingers</p>
+        <figure className="haunting-artwork">
+          <div className="haunting-artwork-mat">
+            <Image
+              src={hauntingArtwork.src}
+              alt={hauntingArtwork.alt}
+              width={hauntingArtwork.width}
+              height={hauntingArtwork.height}
+              sizes="(max-width: 680px) calc(100vw - 5rem), 40rem"
+              unoptimized
+            />
+          </div>
+          <figcaption>An apparition captured at the scene</figcaption>
+        </figure>
         <div className="obituary-copy">
           {memorial.haunting.paragraphs.map((paragraph, index) => (
             <p key={index}>{paragraph}</p>

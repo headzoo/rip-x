@@ -2,6 +2,8 @@ import "server-only";
 
 import { Client, type Schemas } from "@xdevplatform/xdk";
 
+import { createCachedXTimelineReader } from "./x-timeline-cache";
+
 let client: Client | undefined;
 
 function getXClient(): Client {
@@ -51,6 +53,10 @@ export async function getUserTweets(
       ],
     });
 
+    if (response.errors?.length) {
+      throw new Error("X returned an incomplete timeline response.");
+    }
+
     tweets.push(...(response.data ?? []));
     paginationToken = response.meta?.nextToken;
   } while (tweets.length < count && paginationToken);
@@ -63,26 +69,28 @@ export interface XUserTimeline {
   tweets: Schemas.Post[];
 }
 
-export async function getUserTweetsByUsername(
-  rawUsername: string,
-  count: number,
-): Promise<XUserTimeline> {
-  const username = rawUsername.trim().replace(/^@/, "");
+/** Reuses the public profile and timeline for X_CACHE_TTL_SECONDS (one hour). */
+export const getUserTweetsByUsername = createCachedXTimelineReader(
+  async (username, count) => {
+    const response = await getXClient().users.getByUsername(username, {
+      userFields: ["name", "profile_image_url", "username", "protected"],
+    });
 
-  if (!/^[A-Za-z0-9_]{1,15}$/.test(username)) {
-    throw new Error("Enter a valid X username.");
-  }
+    if (!response.data?.id) {
+      throw new Error(`The X account @${username} could not be found.`);
+    }
+    if (response.data.protected) {
+      throw new Error(
+        `The X account @${username} is protected. Only public accounts can be summoned.`,
+      );
+    }
+    if (response.errors?.length) {
+      throw new Error("X returned an incomplete profile response.");
+    }
 
-  const response = await getXClient().users.getByUsername(username, {
-    userFields: ["name", "profile_image_url", "username"],
-  });
-
-  if (!response.data?.id) {
-    throw new Error(`The X account @${username} could not be found.`);
-  }
-
-  return {
-    user: response.data,
-    tweets: await getUserTweets(response.data.id, count),
-  };
-}
+    return {
+      user: response.data,
+      tweets: await getUserTweets(response.data.id, count),
+    };
+  },
+);

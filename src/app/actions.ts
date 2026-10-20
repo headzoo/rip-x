@@ -3,6 +3,11 @@
 import { ApiError } from "@xdevplatform/xdk";
 
 import {
+  generateHauntingArtwork,
+  HauntingImageGenerationError,
+  type HauntingArtwork,
+} from "@/lib/haunting-image";
+import {
   generateMemorial,
   MemorialGenerationError,
   type Memorial,
@@ -18,6 +23,7 @@ export type MemorialState =
       status: "success";
       username: string;
       displayName: string;
+      hauntingArtwork: HauntingArtwork;
       postsAnalyzed: number;
       memorial: Memorial;
     };
@@ -62,11 +68,16 @@ export async function summonMemorial(
       displayName,
       posts,
     });
+    const hauntingArtwork = await generateHauntingArtwork({
+      haunting: memorial.haunting,
+      username: resolvedUsername,
+    });
 
     return {
       status: "success",
       username: resolvedUsername,
       displayName,
+      hauntingArtwork,
       postsAnalyzed: posts.length,
       memorial,
     };
@@ -111,6 +122,19 @@ export async function summonMemorial(
       return {
         status: "error",
         message: "The séance ended before all three parchments were ready. Please try again.",
+      };
+    }
+
+    if (error instanceof HauntingImageGenerationError) {
+      console.error("Failed to generate haunting artwork", {
+        code: error.code,
+        cause:
+          error.cause instanceof Error ? error.cause.name : "UnknownError",
+      });
+
+      return {
+        status: "error",
+        message: "The ghost arrived, but its portrait would not develop. Please try again.",
       };
     }
 

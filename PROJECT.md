@@ -26,19 +26,19 @@ One polished, reliable “it followed me home” mechanic is better than several
 1. **Invitation** — The homepage presents one prominent X username field inside a strongly Halloween-themed interface.
 2. **Retrieval** — The server resolves the username and downloads up to 25 of the account's latest public posts through X API v2.
 3. **Reading the remains** — A private analysis infers temperament, habits of mind, social style, contradictions, and humor, without passing individual post topics or quotations to the writer.
-4. **Generation** — OpenAI produces structured last words, an obituary, and a haunting based only on the personality portrait and display name.
-5. **Reveal** — Once all three pieces are ready, the username form fades out. Three separate parchments appear vertically: last words first, obituary second, haunting third. Focus and scrolling move to the first parchment.
+4. **Generation** — OpenAI produces structured last words, an obituary, and a haunting based only on the personality portrait and display name, then turns the haunting into an original ghost scene.
+5. **Reveal** — Once all three pieces and the apparition are ready, the username form fades out. Three separate parchments appear vertically: last words first, obituary second, and an illustrated haunting third. Focus and scrolling move to the first parchment.
 6. **Aftermath** — A restrained browser effect or optional downloadable artifact makes the experience feel as though it has escaped the result card.
 
-The reveal should be paced theatrically. A short “reading the remains” state is more appropriate than an ordinary loading spinner, as long as it does not make the real wait feel artificially long.
+The reveal should be paced theatrically. While the request is processing, six translucent ghosts, about 150px tall, drift independently around the viewport. A shared 12-frame sprite sheet animates their billowing gowns and mouths opening to moan. They fade away when the request completes or fails. The effect does not intercept clicks or screen-reader navigation, and reduced-motion preferences show still apparitions. It does not add any artificial delay to the request.
 
 ## Generated Result
 
 The writer returns a single structured result with three required fields:
 
 1. **Last words** — A short, witty, invented final utterance in the subject's voice. It is not a quote from their posts or a report of their real final words.
-2. **Obituary** — A headline, epitaph, three paragraphs of comic remembrance, and a closing line. Its very first prose sentence names the person and announces a specific, absurd fictional cause of death driven by their personality. The remaining prose explores their human contradictions; it contains no ghost activity, afterlife scene, or haunting location.
-3. **Haunting** — A specific imagined location, two paragraphs showing why the ghost is there and how it haunts, and a sentence of unfinished business. All supernatural activity belongs here.
+2. **Obituary** — A headline, epitaph, three paragraphs of comic remembrance, and a closing survivor roll call beginning “They were survived by…”. Its very first prose sentence names the person and announces a specific, absurd fictional cause of death driven by their personality. The remaining prose explores their human contradictions. The closing line includes invented pets and houseplants whose comic reactions reflect that personality, ending on a punchline. It contains no ghost activity, afterlife scene, or haunting location.
+3. **Haunting** — A specific imagined location, an AI-generated image showing the ghost haunting it, two paragraphs explaining the haunting, and a sentence of unfinished business. All supernatural activity belongs here.
 
 Each parchment has its own jokes. They should feel like the same person without repeating the last words, recycling paragraphs, or referencing individual recent posts.
 
@@ -69,7 +69,7 @@ The site is making fiction about living people. That fact needs to remain clear 
 - Base recognizable details on the supplied posts, but clearly separate grounded observations from supernatural invention.
 - Infer personality without quoting, paraphrasing, or alluding to individual posts in the generated result.
 - Do not analyze protected accounts or attempt to bypass account privacy.
-- Do not persist the source posts by default. Process them server-side and discard them after generation unless storage becomes an explicit product requirement.
+- Keep source posts server-side. The explicitly approved exception to transient processing is a short-lived X profile/timeline cache (one hour by default) to avoid repeated API charges. Do not build a permanent archive of source posts or expose cached raw timelines to the browser.
 
 The homepage language says “your X username,” but technically an app-only token can look up other public accounts. If the experience permits arbitrary usernames, the fictional framing and anti-harassment guardrails become even more important.
 
@@ -80,12 +80,13 @@ The application is a Next.js App Router project hosted on Vercel.
 ### Server-side flow
 
 1. Validate and normalize the username.
-2. Resolve it to an X user ID.
-3. Fetch 25 recent posts for the current obituary flow (the broader concept targets 100).
+2. Check the Vercel Runtime Cache for that normalized username and requested post count.
+3. On a miss or expiration, resolve the X user ID, verify the account is public, and fetch 25 recent posts for the current obituary flow (the broader concept targets 100). Cache the successful profile/timeline pair for the configured TTL.
 4. Convert the raw API response into a compact analysis payload.
 5. Ask OpenAI for a private, structured personality portrait: temperament, habits of mind, social style, a comic contradiction, and an endearing quality. Strip away individual post topics, quotes, anecdotes, and identifying details.
 6. Make a separate OpenAI request with only that portrait and the display name. The writer has no source posts or previous response history; it generates all three pieces together with a strict schema, keeping the haunting outside the obituary.
-7. Validate both responses. Return the three-part memorial to the browser only when complete, and discard the intermediate portrait after generation. Both requests use the configured text model and disable response storage.
+7. Validate both text responses, then generate a compressed landscape WebP from the haunting's location, activity, and unfinished business using the configured image model. The scene depicts a personalized but non-identifiable ghost rather than claiming to reproduce the account owner's appearance.
+8. Return the three-part memorial and apparition to the browser only when complete, and discard the intermediate portrait after generation. Both text requests use the configured text model and disable response storage.
 
 X and OpenAI credentials must remain in server-only modules. The browser should never receive either secret or the full raw prompt.
 
@@ -93,12 +94,21 @@ Expected environment variables:
 
 ```bash
 X_API_BEARER_TOKEN=
+X_CACHE_TTL_SECONDS=3600
 OPENAI_API_KEY=
 OPENAI_MODEL=
 OPENAI_IMAGE_MODEL=
 ```
 
 Keeping the text and image models configurable will be useful during the hackathon when balancing speed, cost, writing quality, and visual style.
+
+### X data cache
+
+Use `getCache()` from `@vercel/functions`, with no separate database or cache credentials. Cache the profile and source posts together for one hour by default; `X_CACHE_TTL_SECONDS=0` disables it. Normalize case and a leading `@` so username variants share an entry. The versioned RIP-X namespace and keys include the requested post count and TTL.
+
+This cache survives Vercel deployments, is regional, and is separate for Preview and Production. Locally, the SDK uses process memory. It is an optimization, not durable storage: cache failures fall back to X, and only successful complete responses are stored. Concurrent identical misses are coalesced within each server process, not across instances.
+
+The tradeoff is that source data and account visibility can be up to the configured TTL old. Do not serve expired data during an X outage. Generated text, personality portraits, and haunting images are not stored in this cache; each submission still performs fresh AI generation.
 
 ### Post selection
 
@@ -133,7 +143,7 @@ Failure handling is part of the fiction, but clarity comes first.
 - Protected account: explain that the séance cannot cross a private boundary.
 - Too few posts: generate a shorter “faint signal” result or ask for another account.
 - X rate limit or outage: explain that the signal has gone quiet and invite a retry.
-- OpenAI failure: preserve the fetched state only in memory long enough for a safe retry.
+- OpenAI failure: a retry can reuse the X profile/timeline cache while it remains within its TTL; do not persist the intermediate personality portrait.
 - Moderation refusal: return a tasteful generic haunted profile instead of exposing internal errors.
 
 The UI can phrase these states thematically, but should still tell the visitor what happened and what they can do next.
