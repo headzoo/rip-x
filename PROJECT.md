@@ -27,8 +27,8 @@ One polished, reliable “it followed me home” mechanic is better than several
 2. **Retrieval** — The server resolves the username and downloads up to 25 of the account's latest public posts through X API v2.
 3. **Reading the remains** — A private analysis infers temperament, habits of mind, social style, contradictions, and humor, without passing individual post topics or quotations to the writer.
 4. **Generation** — OpenAI produces structured last words, an obituary, and a haunting based only on the personality portrait and display name, then turns the haunting into an original ghost scene.
-5. **Reveal** — Once all three pieces and the apparition are ready, the username form fades out. Three separate parchments appear vertically: last words first, obituary second, and an illustrated haunting third. Focus and scrolling move to the first parchment.
-6. **Aftermath** — A restrained browser effect or optional downloadable artifact makes the experience feel as though it has escaped the result card.
+5. **Reveal** — Once all three pieces and the apparition are ready, an accessible dialog opens the three parchments: last words first, obituary second, and an illustrated haunting third. The username form remains at the top of the homepage.
+6. **Aftermath** — Unless the visitor checks the explicit opt-out, the complete memorial becomes one persistent headstone in the shared graveyard. The homepage shows recent graves; `/graveyard` supports browsing and search; each saved memorial has a direct URL. No ghost neighbors, interactions, or social simulation.
 
 The reveal should be paced theatrically. While the request is processing, six translucent ghosts, about 150px tall, drift independently around the viewport. A shared 12-frame sprite sheet animates their billowing gowns and mouths opening to moan. They fade away when the request completes or fails. The effect does not intercept clicks or screen-reader navigation, and reduced-motion preferences show still apparitions. It does not add any artificial delay to the request.
 
@@ -80,13 +80,21 @@ The application is a Next.js App Router project hosted on Vercel.
 ### Server-side flow
 
 1. Validate and normalize the username.
-2. Check the Vercel Runtime Cache for that normalized username and requested post count.
-3. On a miss or expiration, resolve the X user ID, verify the account is public, and fetch 25 recent posts for the current obituary flow (the broader concept targets 100). Cache the successful profile/timeline pair for the configured TTL.
+2. Resolve the public account's stable X ID using the independently cached profile. For public requests, reuse a READY memorial or acquire a unique generation claim.
+3. For new or opted-out results, read the cached profile/timeline pair bound to the resolved ID, requested count, and TTL. On a miss or expiration, fetch up to 25 recent posts and cache the successful response.
 4. Convert the raw API response into a compact analysis payload.
 5. Ask OpenAI for a private, structured personality portrait: temperament, habits of mind, social style, a comic contradiction, and an endearing quality. Strip away individual post topics, quotes, anecdotes, and identifying details.
 6. Make a separate OpenAI request with only that portrait and the display name. The writer has no source posts or previous response history; it generates all three pieces together with a strict schema, keeping the haunting outside the obituary.
 7. Validate both text responses, then generate a compressed landscape WebP from the haunting's location, activity, and unfinished business using the configured image model. The scene depicts a personalized but non-identifiable ghost rather than claiming to reproduce the account owner's appearance.
 8. Return the three-part memorial and apparition to the browser only when complete, and discard the intermediate portrait after generation. Both text requests use the configured text model and disable response storage.
+
+For public requests, resolve the account identity first and acquire a database
+claim keyed by stable X ID. Reuse a completed memorial without fetching posts or
+calling AI. For new results, store the artwork in the shared Vercel Blob store
+under the RIP-X prefix, then atomically publish the complete record in Neon.
+Opted-out requests skip all database claims and Blob uploads and return a transient
+image/result instead. Expiring claims and token-checked updates prevent duplicate
+graves and late-worker overwrites. See `DEPLOYMENT.md` for rollout and removal.
 
 X and OpenAI credentials must remain in server-only modules. The browser should never receive either secret or the full raw prompt.
 
@@ -98,17 +106,25 @@ X_CACHE_TTL_SECONDS=3600
 OPENAI_API_KEY=
 OPENAI_MODEL=
 OPENAI_IMAGE_MODEL=
+DATABASE_URL=
+DATABASE_URL_UNPOOLED=
+BLOB_STORE_ID=
+BLOB_READ_WRITE_TOKEN=
 ```
 
 Keeping the text and image models configurable will be useful during the hackathon when balancing speed, cost, writing quality, and visual style.
 
 ### X data cache
 
-Use `getCache()` from `@vercel/functions`, with no separate database or cache credentials. Cache the profile and source posts together for one hour by default; `X_CACHE_TTL_SECONDS=0` disables it. Normalize case and a leading `@` so username variants share an entry. The versioned RIP-X namespace and keys include the requested post count and TTL.
+Use `getCache()` from `@vercel/functions`, with no separate cache credentials.
+Profiles have an independent namespace; timelines include the profile and source
+posts. Both expire after one hour by default; `X_CACHE_TTL_SECONDS=0` disables
+caching. Normalize case and a leading `@` so username variants share an entry.
+Timeline keys include the requested count, TTL, and resolved stable X ID.
 
 This cache survives Vercel deployments, is regional, and is separate for Preview and Production. Locally, the SDK uses process memory. It is an optimization, not durable storage: cache failures fall back to X, and only successful complete responses are stored. Concurrent identical misses are coalesced within each server process, not across instances.
 
-The tradeoff is that source data and account visibility can be up to the configured TTL old. Do not serve expired data during an X outage. Generated text, personality portraits, and haunting images are not stored in this cache; each submission still performs fresh AI generation.
+The tradeoff is that source data and account visibility can be up to the configured TTL old. Do not serve expired data during an X outage. Generated text, personality portraits, and haunting images are not stored in this cache. Completed public memorials and image references are instead durable in Neon, with images in Vercel Blob; only new or opted-out memorials perform fresh AI generation.
 
 ### Post selection
 
@@ -156,9 +172,14 @@ The hackathon MVP is complete when a visitor can:
 2. Trigger retrieval of the account's latest 25 posts.
 3. Receive three structured AI-generated pieces: last words, obituary, and haunting.
 4. Read the result in a polished Halloween interface on desktop and mobile.
-5. Experience one small browser-level haunting after the reveal.
+5. Browse a sprite-based graveyard with CSS fog and open saved memorials.
+6. Opt out of publication before submission without changing an existing grave.
 
-The MVP does not require accounts, a database, saved generations, social login, or a large sharing system.
+The approved graveyard expansion uses Prisma/Neon and Vercel Blob for saved
+generations, but does not require visitor accounts, social login, or social ghost
+interactions. Publication is the disclosed default; the opt-out is unchecked.
+This choice does not verify ownership of an entered username. All generated
+content remains explicitly fictional, with operator-only takedowns.
 
 ## Success Criteria
 
@@ -173,9 +194,8 @@ RIP-X succeeds if:
 
 ## Immediate Next Steps
 
-1. Choose one of the three homepage visual directions as the production design system.
-2. Consider expanding the current 25-post retrieval to the original 100-post target, with clear post-type handling.
-3. Add the OpenAI server dependency, environment configuration, and structured response schema.
-4. Draft and test the obituary/ghost prompt against varied public timelines.
-5. Build the staged generation and reveal experience.
-6. Add one opt-in or browser-local haunting mechanic and rehearse the end-to-end demo.
+1. Verify Neon environment bindings and the existing Blob store's public access mode.
+2. Apply the reviewed Prisma migration to the intended database, then deploy.
+3. Smoke-test public reuse and opt-out with consenting accounts in Vercel.
+4. Configure provider spending limits and abuse protection before public promotion.
+5. Rehearse the graveyard, direct-link, and mobile demo flows.

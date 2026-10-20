@@ -61,6 +61,7 @@ export function getXCacheTtlSeconds(
 type TimelineLoader = (
   username: string,
   count: number,
+  identityId?: string,
 ) => Promise<XUserTimeline>;
 
 interface CacheOptions {
@@ -81,7 +82,7 @@ export function createCachedXTimelineReader(
   // Coalesce misses within this process, not across Vercel instances/regions.
   const pending = new Map<string, Promise<XUserTimeline>>();
 
-  return async (rawUsername, count) => {
+  return async (rawUsername, count, identityId) => {
     const username = rawUsername.trim().replace(/^@/, "").toLowerCase();
 
     if (!/^[a-z0-9_]{1,15}$/.test(username)) {
@@ -90,12 +91,15 @@ export function createCachedXTimelineReader(
     if (!Number.isSafeInteger(count) || count < 1) {
       throw new Error("Tweet count must be a positive integer.");
     }
+    if (identityId !== undefined && !/^\d{1,19}$/.test(identityId)) {
+      throw new Error("Invalid X identity.");
+    }
 
     const ttl = getTtl();
-    if (ttl === 0) return loadTimeline(username, count);
+    if (ttl === 0) return loadTimeline(username, count, identityId);
 
     // Include TTL so a configuration change cannot reuse an old TTL policy.
-    const key = `${username}:${count}:${ttl}`;
+    const key = `${username}:${count}:${ttl}${identityId ? `:id:${identityId}` : ""}`;
     const existing = pending.get(key);
     if (existing) return existing;
 
@@ -109,6 +113,7 @@ export function createCachedXTimelineReader(
             age >= 0 &&
             age < ttl * 1000 &&
             entry.data.timeline.user.username.toLowerCase() === username &&
+            (!identityId || entry.data.timeline.user.id === identityId) &&
             entry.data.timeline.tweets.length <= count
           ) {
             return entry.data.timeline;
@@ -121,7 +126,7 @@ export function createCachedXTimelineReader(
 
       const fetchedAt = now();
       // A failed or partial X request throws before anything can be stored.
-      const timeline = await loadTimeline(username, count);
+      const timeline = await loadTimeline(username, count, identityId);
 
       try {
         await cache.set(

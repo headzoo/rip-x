@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MemorialStatus {
+  GENERATING
+  READY
+  FAILED
+  HIDDEN
+}
+
+model Memorial {
+  id               String         @id @default(uuid()) @db.Uuid
+  xUserId          String         @unique @db.VarChar(19)
+  username         String         @db.VarChar(15)
+  displayName      String
+  status           MemorialStatus @default(GENERATING)
+  content          Json?
+  artworkUrl       String?
+  artworkPath      String?
+  artworkAlt       String?
+  artworkWidth     Int?
+  artworkHeight    Int?
+  postsAnalyzed    Int            @default(0)
+  headstoneVariant Int            @default(0)
+  claimToken       String?        @db.Uuid
+  leaseExpiresAt   DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  publishedAt      DateTime?
+
+  @@index([status, publishedAt(sort: Desc), id])
+  @@index([username])
+  @@map("rip_x_memorials")
+}

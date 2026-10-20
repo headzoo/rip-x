@@ -1,8 +1,7 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 
-import type { HauntingArtwork } from "@/lib/haunting-image";
-import type { Memorial } from "@/lib/memorial";
+import type { HauntingArtwork, Memorial } from "@/lib/memorial-contract";
 
 function Parchment({
   children,
@@ -42,7 +41,7 @@ export function MemorialParchments({
   username: string;
 }) {
   return (
-    <>
+    <div className="memorial-results">
       <Parchment labelledBy="last-words-title" className="last-words-parchment">
         <p className="obituary-kicker">I · An imagined farewell</p>
         <h2 id="last-words-title">Last Words</h2>
@@ -98,6 +97,6 @@ export function MemorialParchments({
           No actual death is implied.
         </p>
       </Parchment>
-    </>
+    </div>
   );
 }

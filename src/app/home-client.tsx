@@ -1,10 +1,14 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useState } from "react";
+import Link from "next/link";
 
 import { summonMemorial, type MemorialState } from "./actions";
 import { MemorialParchments } from "./memorial-parchments";
 import { SummoningGhosts } from "./summoning-ghosts";
+import { GraveyardScene } from "./graveyard-scene";
+import { MemorialDialog } from "./memorial-dialog";
+import styles from "./graveyard.module.css";
 
 const initialState: MemorialState = { status: "idle" };
 
@@ -40,36 +44,14 @@ export function HomeClient() {
     summonMemorial,
     initialState,
   );
-  const memorialRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (state.status === "success") {
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const scrollTimer = window.setTimeout(() => {
-        memorialRef.current?.focus({ preventScroll: true });
-        memorialRef.current?.scrollIntoView({
-          behavior: reduceMotion ? "instant" : "smooth",
-          block: "start",
-        });
-      }, reduceMotion ? 0 : 850);
-
-      return () => window.clearTimeout(scrollTimer);
-    }
-  }, [state.status]);
+  const [dismissed, setDismissed] = useState<MemorialState | null>(null);
 
   return (
     <main className="occult-page">
       <div className="ritual-glow" aria-hidden="true" />
       <SummoningGhosts active={pending} />
-      <section
-        className="ritual-shell"
-        aria-labelledby={state.status === "success" ? "last-words-title" : "page-title"}
-      >
-        <div
-          className={`ritual-intro${state.status === "success" ? " ritual-intro-exit" : ""}`}
-          aria-hidden={state.status === "success"}
-          inert={state.status === "success" ? true : undefined}
-        >
+      <section className="ritual-shell" aria-labelledby="page-title">
+        <div className="ritual-intro">
           <header className="ritual-header">
             <h1 id="page-title">Summon Their Last Words</h1>
             <p>Enter an X username. See what still lingers.</p>
@@ -80,39 +62,51 @@ export function HomeClient() {
             </div>
           </header>
 
-          <form action={formAction} className="summoning-form">
-            <label htmlFor="username" className="sr-only">
-              X username
-            </label>
-            <div className="username-field">
-              <span aria-hidden="true">@</span>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                autoComplete="off"
-                autoCapitalize="none"
-                spellCheck={false}
-                required
-                maxLength={16}
-                pattern="@?[A-Za-z0-9_]{1,15}"
-                placeholder="username"
-              />
+          <form action={formAction}>
+            <div className="summoning-form">
+              <label htmlFor="username" className="sr-only">
+                X username
+              </label>
+              <div className="username-field">
+                <span aria-hidden="true">@</span>
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  autoComplete="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  required
+                  maxLength={16}
+                  pattern="@?[A-Za-z0-9_]{1,15}"
+                  placeholder="username"
+                />
+              </div>
+              <button type="submit" disabled={pending}>
+                {pending ? (
+                  <>
+                    <span className="ritual-spinner" aria-hidden="true" />
+                    Summoning
+                  </>
+                ) : (
+                  <>
+                    <ArrowMark />
+                    Summon Their Ghost
+                    <ArrowMark />
+                  </>
+                )}
+              </button>
             </div>
-            <button type="submit" disabled={pending}>
-              {pending ? (
-                <>
-                  <span className="ritual-spinner" aria-hidden="true" />
-                  Summoning
-                </>
-              ) : (
-                <>
-                  <ArrowMark />
-                  Summon Their Ghost
-                  <ArrowMark />
-                </>
-              )}
-            </button>
+            <div className={styles.privacy}>
+              <label>
+                <input name="optOut" type="checkbox" disabled={pending} aria-describedby="privacy-explanation" />
+                Don’t add this memorial to the public graveyard.
+              </label>
+              <p id="privacy-explanation">
+                By default, the fictional memorial and its artwork are saved for everyone to see.
+                Checking this box keeps this result unsaved; it won’t remove an existing grave.
+              </p>
+            </div>
           </form>
 
           <div className="summoning-response" aria-live="polite">
@@ -135,21 +129,26 @@ export function HomeClient() {
           </p>
         </div>
 
-        {state.status === "success" ? (
-          <div
-            className="memorial-results"
-            role="region"
-            aria-label="Last words, obituary, and haunting"
-            ref={memorialRef}
-            tabIndex={-1}
-          >
+        {state.status === "success" && dismissed === state && <button type="button"
+          className={styles.reopen} onClick={() => setDismissed(null)}>
+          Reopen {state.id ? "your memorial" : "your unsaved memorial"}
+        </button>}
+        <GraveyardScene compact
+          refreshKey={state.status === "success" ? `${state.id ?? ""}:${state.memorial.lastWords}` : ""}
+          highlightedId={state.status === "success" ? state.id : null} />
+        {state.status === "success" && dismissed !== state ? (
+          <MemorialDialog onClose={() => setDismissed(state)}>
+            <p className={styles.permalink}>
+              {state.id ? <Link href={`/graveyard/${state.id}`}>Open permanent memorial ↗</Link>
+                : "This memorial was not saved to the graveyard. It will disappear when you leave."}
+            </p>
             <MemorialParchments
               memorial={state.memorial}
               displayName={state.displayName}
               hauntingArtwork={state.hauntingArtwork}
               username={state.username}
             />
-          </div>
+          </MemorialDialog>
         ) : null}
       </section>
     </main>

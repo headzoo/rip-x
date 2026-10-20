@@ -5,28 +5,8 @@ import { z } from "zod";
 
 import { getOpenAIClient, getOpenAIModel } from "@/lib/openai";
 
-const ObituarySchema = z.object({
-  title: z.string(),
-  epitaph: z.string(),
-  paragraphs: z.array(z.string()).length(3).describe(
-    "Three comic remembrance paragraphs. The very first sentence states the subject's absurd fictional cause of death, driven by their personality. No ghost activity or haunting scenes.",
-  ),
-  closingLine: z.string().describe(
-    'The obituary\'s final sentence, beginning exactly "They were survived by" and including funny invented pet and houseplant survivors whose reactions reflect the subject\'s personality.',
-  ),
-});
-
-export const MemorialSchema = z.object({
-  lastWords: z.string().describe("A short, invented final utterance in the subject's own voice."),
-  obituary: ObituarySchema,
-  haunting: z.object({
-    location: z.string().describe("A specific invented setting, used as the haunting's heading."),
-    paragraphs: z.array(z.string()).length(2),
-    unfinishedBusiness: z.string().describe("The comic unresolved impulse keeping this ghost here."),
-  }),
-});
-
-export type Memorial = z.infer<typeof MemorialSchema>;
+import { MemorialSchema, type Memorial } from "./memorial-contract";
+export { MemorialSchema, type Memorial } from "./memorial-contract";
 
 // This private handoff deliberately has no quotes, topics, or source evidence.
 // The writer receives a character portrait without access to the timeline.

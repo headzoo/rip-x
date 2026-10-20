@@ -95,14 +95,7 @@ input {
 }
 
 .ritual-intro {
-  max-height: 32rem;
   transform-origin: top center;
-}
-
-.ritual-intro-exit {
-  overflow: hidden;
-  pointer-events: none;
-  animation: ritual-intro-exit 850ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .ritual-header {
@@ -664,26 +657,6 @@ input {
     border-color: rgb(190 148 84 / 72%);
     color: #f1ddb6;
     box-shadow: 0 10px 34px rgb(127 78 24 / 18%);
-  }
-}
-
-@keyframes ritual-intro-exit {
-  0% {
-    max-height: 32rem;
-    opacity: 1;
-    translate: 0 0;
-  }
-
-  48% {
-    opacity: 0;
-    translate: 0 -1rem;
-  }
-
-  100% {
-    max-height: 0;
-    opacity: 0;
-    translate: 0 -1.5rem;
-    visibility: hidden;
   }
 }
 

@@ -42,6 +42,17 @@ function fixture() {
   return { entries, writes, loads, cache, load, options, read };
 }
 
+test("timeline cache keys are bound to stable X identity", async () => {
+  const f = fixture();
+  const read = createCachedXTimelineReader(async (username, _count, id) => ({
+    ...timeline(username), user: { ...timeline(username).user, id },
+  }), f.options);
+  assert.equal((await read("reused_handle", 25, "123")).user.id, "123");
+  assert.equal((await read("reused_handle", 25, "789")).user.id, "789");
+  assert.equal(f.entries.size, 2);
+  await assert.rejects(read("reused_handle", 25, "bad-id"));
+});
+
 test("reuses profile and posts across normalized username variants", async () => {
   const f = fixture();
   const first = await f.read(" @HeadZoo ", 25);

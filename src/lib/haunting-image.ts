@@ -9,12 +9,8 @@ const IMAGE_WIDTH = 1536;
 const IMAGE_HEIGHT = 1024;
 const MAX_IMAGE_BYTES = 2_000_000;
 
-export interface HauntingArtwork {
-  alt: string;
-  height: number;
-  src: string;
-  width: number;
-}
+import type { HauntingArtwork } from "./memorial-contract";
+export type { HauntingArtwork } from "./memorial-contract";
 
 interface GenerateHauntingArtworkInput {
   haunting: Memorial["haunting"];

@@ -1,6 +1,8 @@
 import "server-only";
 
 import { Client, type Schemas } from "@xdevplatform/xdk";
+import { getCache } from "@vercel/functions";
+import { createHash } from "node:crypto";
 
 import { createCachedXTimelineReader } from "./x-timeline-cache";
 
@@ -69,9 +71,8 @@ export interface XUserTimeline {
   tweets: Schemas.Post[];
 }
 
-/** Reuses the public profile and timeline for X_CACHE_TTL_SECONDS (one hour). */
-export const getUserTweetsByUsername = createCachedXTimelineReader(
-  async (username, count) => {
+const readProfile = createCachedXTimelineReader(
+  async (username) => {
     const response = await getXClient().users.getByUsername(username, {
       userFields: ["name", "profile_image_url", "username", "protected"],
     });
@@ -90,7 +91,29 @@ export const getUserTweetsByUsername = createCachedXTimelineReader(
 
     return {
       user: response.data,
-      tweets: await getUserTweets(response.data.id, count),
+      tweets: [],
     };
+  },
+  { cache: getCache({
+    namespace: "rip-x:x-profile:v1",
+    keyHashFunction: (key) => createHash("sha256").update(key).digest("hex"),
+  }) },
+);
+
+/** Resolve identity independently, before deciding whether posts are needed. */
+export async function getXIdentity(username: string) {
+  const { user } = await readProfile(username, 1);
+  if (!user.id || !user.username) throw new Error("The X account could not be resolved.");
+  return { id: user.id, username: user.username, name: user.name?.trim() || `@${user.username}` };
+}
+
+/** Reuses the public profile and timeline for X_CACHE_TTL_SECONDS (one hour). */
+export const getUserTweetsByUsername = createCachedXTimelineReader(
+  async (username, count, identityId) => {
+    const { user } = await readProfile(username, 1);
+    if (!user.id || (identityId && identityId !== user.id)) {
+      throw new Error("The X account changed during this request. Please try again.");
+    }
+    return { user, tweets: await getUserTweets(user.id, count) };
   },
 );

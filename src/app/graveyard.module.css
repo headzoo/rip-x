@@ -1,0 +1,68 @@
+.privacy { max-width: 46rem; margin: 1.2rem auto 0; text-align: left; color: #d5c6ad; }
+.privacy label { display: flex; gap: .65rem; align-items: flex-start; cursor: pointer; font-size: 1rem; }
+.privacy input { width: 1.1rem; height: 1.1rem; flex-shrink: 0; margin-top: .15rem; accent-color: #9f764a; }
+.privacy p { margin: .45rem 0 0 1.75rem; font: .76rem/1.6 var(--font-geist-sans), sans-serif; color: #b6ac9a; }
+.graveyard { margin-top: 3rem; }
+.heading { padding: 0 1rem 1.6rem; text-shadow: 0 2px 12px #000; }
+.eyebrow { font: .65rem/1.6 var(--font-geist-sans), sans-serif; letter-spacing: .2em; text-transform: uppercase; color: #bea57b; }
+.heading h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; margin: .5rem 0; letter-spacing: .035em; }
+.heading > p:last-of-type { color: #c2b59f; font-size: .95rem; }
+.scene { position: relative; isolation: isolate; min-height: 25rem; overflow: hidden; border-top: 1px solid #77644370; border-bottom: 1px solid #77644370; background: linear-gradient(#0c151299, #0c121066), url("/images/graveyard/ground.webp") center / 32rem; box-shadow: inset 0 0 80px 35px #070c0b; }
+.scene::before { content: ""; position: absolute; inset: 0 0 auto; height: 27rem; background: url("/images/graveyard/clearing.webp") center 55% / cover; mask-image: linear-gradient(#000 45%, transparent); pointer-events: none; }
+.plots { position: relative; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1.5rem 0; padding: 4rem 1rem 2rem; margin: 0; list-style: none; }
+.plot { min-width: 0; position: relative; }
+.plot:nth-child(even) { padding-top: 2rem; }
+.headstone { position: relative; display: block; width: 100%; aspect-ratio: 1; color: #ede4cc; text-decoration: none; transition: filter .3s, transform .3s; filter: drop-shadow(0 12px 8px #000a); }
+.headstone > img { width: 100%; height: 100%; object-fit: contain; filter: saturate(.25) brightness(.8); transition: filter .3s; }
+.headstone:hover, .headstone:focus-visible { transform: translateY(-5px); z-index: 3; }
+.headstone:hover > img, .headstone:focus-visible > img { filter: saturate(.5) brightness(1.1); }
+.headstone:focus-visible { outline: 2px solid #d9b879; outline-offset: 2px; border-radius: 30% 30% 8% 8%; }
+.inscription { position: absolute; left: 23%; right: 23%; top: 43%; bottom: 22%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .2rem; text-shadow: 0 1px 2px #000, 0 0 6px #000; text-align: center; }
+.inscription > span { flex-shrink: 0; }
+.rest { font-size: .55rem; line-height: 1.2; letter-spacing: .12em; text-transform: uppercase; color: #c9c0a9; }
+.name { font-size: clamp(.8rem, 1.5vw, 1.1rem); font-weight: 600; line-height: 1.12; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.username { font-size: clamp(.58rem, 1.05vw, .75rem); line-height: 1.2; word-break: break-all; color: #d0c5ae; }
+.flourish { font-size: .65rem; line-height: 1; color: #c2ab82; }
+.epitaph { position: absolute; z-index: 5; left: 2%; right: 2%; top: 90%; padding: .65rem; background: #10150feb; border: 1px solid #988159; font-size: .78rem; line-height: 1.4; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.headstone:hover .epitaph, .headstone:focus-visible .epitaph { opacity: 1; }
+.newGrave { filter: drop-shadow(0 0 18px #d6a85190); }
+.fog { position: absolute; z-index: 2; inset: 30% -50% -10%; pointer-events: none; opacity: .28; background: radial-gradient(ellipse at 24% 60%, #b9d2c540, transparent 30%), radial-gradient(ellipse at 70% 80%, #b6c8bf85, transparent 35%); filter: blur(15px); animation: drift 32s ease-in-out infinite alternate; }
+.fogFar { z-index: 0; inset: 0 -50% 45%; opacity: .35; animation-duration: 47s; animation-direction: alternate-reverse; }
+@keyframes drift { from { transform: translateX(-12%); } to { transform: translateX(12%); } }
+.notice { position: relative; z-index: 3; min-height: 24rem; padding: 5rem 1.5rem; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: .8rem; text-align: center; color: #d0c6b1; }
+.notice h3 { font-size: 1.8rem; font-weight: 400; margin: 0; }
+.notice p { margin: 0; max-width: 30rem; }
+.emptyMark { font-size: 3rem; color: #c3aa7e; }
+.footer { padding: 1.5rem .5rem 0; }
+.footer > a, .back a, .permalink a { color: #d1b684; text-decoration: none; border-bottom: 1px solid #91784790; padding-bottom: .25rem; }
+.footer > p { font: .65rem/1.6 var(--font-geist-sans), sans-serif; color: #b3aa9b; margin-top: 1.25rem; }
+.search { display: flex; max-width: 32rem; margin: 1.5rem auto 0; gap: .5rem; }
+.search input { width: 100%; min-width: 0; background: #0b100e; border: 1px solid #89724c; padding: .7rem .8rem; color: #e3d4b6; }
+.search button, .pagination button, .notice button, .dialogToolbar button { border: 1px solid #8e7650; padding: .6rem .8rem; background: #141a15; color: #ead9b7; cursor: pointer; }
+.search button { white-space: nowrap; }
+.pagination { display: flex; gap: 1rem; align-items: center; justify-content: center; font-size: .9rem; }
+.pagination button:disabled { opacity: .4; cursor: default; }
+.back { text-align: left; margin-bottom: 2rem; }
+.dialog { position: fixed; inset: 0; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0 1rem 3rem; overflow-y: auto; border: 0; background: #080c0be8; color: #ead9b7; }
+.dialog::backdrop { background: #020604c9; backdrop-filter: blur(7px); }
+.dialogInner { width: min(48rem,100%); margin-inline: auto; text-align: center; }
+.dialogToolbar { position: sticky; top: 0; z-index: 4; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .8rem 0; background: #0a100ff0; }
+.dialogToolbar span { color: #baaa8e; font-style: italic; font-size: .9rem; }
+.permalink { margin: 1rem 0 1.5rem; font-size: .85rem; }
+.reopen { margin-top: 1.5rem; color: #d1b684; background: transparent; border: 0; border-bottom: 1px solid #91784790; cursor: pointer; }
+@media (max-width: 700px) {
+  .plots { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 2rem 0 1.5rem; gap: 1rem 0; }
+  .name { font-size: clamp(.75rem,3vw,1.1rem); }
+  .username { font-size: clamp(.55rem,2vw,.75rem); }
+  .inscription { left: 22%; right: 22%; gap: .2rem; }
+  .rest { font-size: .5rem; }
+  .scene::before { height: 17rem; background-size: auto 100%; }
+  .flourish { display: none; }
+  .pagination { gap: .5rem; font-size: .75rem; }
+  .dialogToolbar span { display: none; }
+  .dialogToolbar { justify-content: flex-end; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fog { animation: none; }
+  .headstone, .headstone > img, .epitaph { transition: none; }
+}
